@@ -178,6 +178,7 @@ def get_response(user_query: str, chat_history: List[Dict[str, Any]] = None):
     5. When comparing values, provide relative differences
     6. Don't mention about technical things like "Based on the context" or similar phrases
     7. Give your primary answer in one concise sentence
+    8. User question not related annual report say 'Please ask anything about PLC annual report'.
     
     Visualization Guidelines:
     1. For ANY comparison between time periods (like year-over-year, quarter-to-quarter, or specific dates):

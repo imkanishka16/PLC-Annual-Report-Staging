@@ -349,7 +349,7 @@ if __name__ == "__main__":
     conversation_history = []
     
     # First query
-    query1 = "How did the Group's basic earnings per ordinary share change from 2023 to 2024, and what might this indicate about company performance?"
+    query1 = "How are you?"
     response1 = get_response(query1, conversation_history)
     # print("\nFirst query response:")
     print(response1['content'])
