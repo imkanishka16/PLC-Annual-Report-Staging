@@ -83,7 +83,66 @@ def format_chat_history(chat_history: List[Dict[str, Any]]) -> str:
     return "\n".join(formatted_history)
 
 
+# def extract_response_data(result):
+#     graph_needed_pattern = r'graph_needed:\s*"?(yes|no|[\w\s]+)"?'
+#     graph_type_pattern = r'graph_type:\s*(\S.*)'
+#     data_array_pattern = r'data_array:\s*(\[.*?\])'
+#     text_pattern = r'text_answer:\s*(\S.*)'
+    
+#     graph_needed = re.search(graph_needed_pattern, result, re.IGNORECASE)
+#     graph_type = re.search(graph_type_pattern, result, re.IGNORECASE)
+#     data_array = re.search(data_array_pattern, result, re.DOTALL | re.IGNORECASE)
+#     text_output = re.search(text_pattern, result, re.IGNORECASE)
+    
+#     graph_needed_value = graph_needed.group(1).strip().lower() if graph_needed else "no"
+#     graph_type_value = graph_type.group(1).strip().strip("'\"[]") if graph_type else "text"
+#     text_str = text_output.group(1).strip() if text_output else ""
+    
+#     data_array_value = None
+#     if data_array:
+#         try:
+#             data_array_text = data_array.group(1).strip()
+#             data_array_value = json.loads(data_array_text)
+#         except json.JSONDecodeError:
+#             data_array_value = None
+    
+#     if data_array_value and isinstance(data_array_value, list) and len(data_array_value) > 0:
+#         first_entry = data_array_value[0]
+#         possible_keys = list(first_entry.keys())
+#         label_key = possible_keys[0]
+#         data_keys = possible_keys[1:] if len(possible_keys) > 1 else []
+        
+#         labels = [str(item.get(label_key, "N/A")) for item in data_array_value]
+#         datasets = []
+#         for item in data_array_value:
+#             item_data = []
+#             for key in data_keys:
+#                 value = item.get(key, None)
+#                 try:
+#                     if value is not None:
+#                         value = float(value)
+#                 except (ValueError, TypeError):
+#                     pass
+#                 item_data.append(value)
+#             datasets.append(tuple(item_data))
+        
+#         formatted_data = {
+#             "labels": labels,
+#             "datasets": datasets,
+#             "legend": data_keys if data_keys else False
+#         }
+#     else:
+#         formatted_data = None
+    
+#     return graph_needed_value, graph_type_value, formatted_data, text_str
+
 def extract_response_data(result):
+    """
+    Extract and format response data from the LLM output for visualization.
+    
+    This function handles financial values in PLC annual reports,
+    making sure they're displayed with their full value (in thousands).
+    """
     graph_needed_pattern = r'graph_needed:\s*"?(yes|no|[\w\s]+)"?'
     graph_type_pattern = r'graph_type:\s*(\S.*)'
     data_array_pattern = r'data_array:\s*(\[.*?\])'
@@ -106,6 +165,9 @@ def extract_response_data(result):
         except json.JSONDecodeError:
             data_array_value = None
     
+    # Check if we're dealing with financial data (financial values typically have "Rs." in the text)
+    has_financial_data = "Rs." in text_str or "Rs " in text_str
+    
     if data_array_value and isinstance(data_array_value, list) and len(data_array_value) > 0:
         first_entry = data_array_value[0]
         possible_keys = list(first_entry.keys())
@@ -114,16 +176,24 @@ def extract_response_data(result):
         
         labels = [str(item.get(label_key, "N/A")) for item in data_array_value]
         datasets = []
+        
         for item in data_array_value:
             item_data = []
             for key in data_keys:
                 value = item.get(key, None)
                 try:
                     if value is not None:
-                        value = float(value)
+                        numeric_value = float(value)
+                        
+                        # Instead of multiplying by 1000, multiply by 1000 if the value is too small
+                        # This helps ensure financial values are represented in their full amount
+                        # The condition checks if the value is likely in thousands already
+                        if has_financial_data and numeric_value < 100000 and "million" not in text_str.lower():
+                            numeric_value *= 1000
+                        
+                        item_data.append(numeric_value)
                 except (ValueError, TypeError):
-                    pass
-                item_data.append(value)
+                    item_data.append(value)
             datasets.append(tuple(item_data))
         
         formatted_data = {
@@ -186,28 +256,28 @@ def get_response(user_query: str, chat_history: List[Dict[str, Any]] = None):
         - Use 'line_chart' for three or more periods
         Example for bar_chart:
         [
-            {{"period": "1 April 2022", "retained_earnings": 23122851000}},
-            {{"period": "31 March 2023", "retained_earnings": 23248550000}}
+            {{"period": "1 April 2022", "retained_earnings": 1265287000}},
+            {{"period": "31 March 2023", "retained_earnings": 1,544820000}}
         ]
 
     2. For breakdown of categories (like expense types, revenue sources, asset classes):
         - Use 'pie_chart' when showing proportions of a whole
         Example for pie_chart:
         [
-            {{"category": "Interest Income", "value": 34621822000}},
-            {{"category": "Fee Income", "value": 3844427000}},
-            {{"category": "Other Income", "value": 895322000}}
+            {{"category": "Interest Income", "value": 691195000}},
+            {{"category": "Fee Income", "value": 1544820000}},
+            {{"category": "Other Income", "value": 1265287000}}
         ]
 
     3. For performance indicators over multiple periods:
         - Use 'line_chart' to show trends
         Example for line_chart:
         [
-            {{"year": "2019", "net_profit": 4416685000}},
-            {{"year": "2020", "net_profit": 2163598000}},
-            {{"year": "2021", "net_profit": 3517660000}},
-            {{"year": "2022", "net_profit": 8203069000}},
-            {{"year": "2023", "net_profit": 6837927000}}
+            {{"year": "2019", "net_profit": 691195000}},
+            {{"year": "2020", "net_profit": 1265287000}},
+            {{"year": "2021", "net_profit": 154482000}},
+            {{"year": "2022", "net_profit": 979395000}},
+            {{"year": "2023", "net_profit": 687927000}}
         ]
 
     Your response MUST follow this exact format:
@@ -275,7 +345,7 @@ def get_response(user_query: str, chat_history: List[Dict[str, Any]] = None):
             'provider': 'bot',
             'datetime': current_timestamp,
             'type': 'error',
-            'content': error_msg,
+            'content': 'Please ask anything about PLC annual report',
             'data': None
         }
 
@@ -304,3 +374,7 @@ async def health_check():
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
+
+
+# - Convert all financial values to millions (divide by 1,000,000) if they aren't already
+# - Format all values as "Rs. X.XX million" with exactly two decimal place
