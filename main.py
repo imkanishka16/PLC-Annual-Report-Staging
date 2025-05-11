@@ -83,59 +83,6 @@ def format_chat_history(chat_history: List[Dict[str, Any]]) -> str:
     return "\n".join(formatted_history)
 
 
-# def extract_response_data(result):
-#     graph_needed_pattern = r'graph_needed:\s*"?(yes|no|[\w\s]+)"?'
-#     graph_type_pattern = r'graph_type:\s*(\S.*)'
-#     data_array_pattern = r'data_array:\s*(\[.*?\])'
-#     text_pattern = r'text_answer:\s*(\S.*)'
-    
-#     graph_needed = re.search(graph_needed_pattern, result, re.IGNORECASE)
-#     graph_type = re.search(graph_type_pattern, result, re.IGNORECASE)
-#     data_array = re.search(data_array_pattern, result, re.DOTALL | re.IGNORECASE)
-#     text_output = re.search(text_pattern, result, re.IGNORECASE)
-    
-#     graph_needed_value = graph_needed.group(1).strip().lower() if graph_needed else "no"
-#     graph_type_value = graph_type.group(1).strip().strip("'\"[]") if graph_type else "text"
-#     text_str = text_output.group(1).strip() if text_output else ""
-    
-#     data_array_value = None
-#     if data_array:
-#         try:
-#             data_array_text = data_array.group(1).strip()
-#             data_array_value = json.loads(data_array_text)
-#         except json.JSONDecodeError:
-#             data_array_value = None
-    
-#     if data_array_value and isinstance(data_array_value, list) and len(data_array_value) > 0:
-#         first_entry = data_array_value[0]
-#         possible_keys = list(first_entry.keys())
-#         label_key = possible_keys[0]
-#         data_keys = possible_keys[1:] if len(possible_keys) > 1 else []
-        
-#         labels = [str(item.get(label_key, "N/A")) for item in data_array_value]
-#         datasets = []
-#         for item in data_array_value:
-#             item_data = []
-#             for key in data_keys:
-#                 value = item.get(key, None)
-#                 try:
-#                     if value is not None:
-#                         value = float(value)
-#                 except (ValueError, TypeError):
-#                     pass
-#                 item_data.append(value)
-#             datasets.append(tuple(item_data))
-        
-#         formatted_data = {
-#             "labels": labels,
-#             "datasets": datasets,
-#             "legend": data_keys if data_keys else False
-#         }
-#     else:
-#         formatted_data = None
-    
-#     return graph_needed_value, graph_type_value, formatted_data, text_str
-
 def extract_response_data(result):
     """
     Extract and format response data from the LLM output for visualization.
@@ -378,3 +325,57 @@ if __name__ == "__main__":
 
 # - Convert all financial values to millions (divide by 1,000,000) if they aren't already
 # - Format all values as "Rs. X.XX million" with exactly two decimal place
+
+
+# def extract_response_data(result):
+#     graph_needed_pattern = r'graph_needed:\s*"?(yes|no|[\w\s]+)"?'
+#     graph_type_pattern = r'graph_type:\s*(\S.*)'
+#     data_array_pattern = r'data_array:\s*(\[.*?\])'
+#     text_pattern = r'text_answer:\s*(\S.*)'
+    
+#     graph_needed = re.search(graph_needed_pattern, result, re.IGNORECASE)
+#     graph_type = re.search(graph_type_pattern, result, re.IGNORECASE)
+#     data_array = re.search(data_array_pattern, result, re.DOTALL | re.IGNORECASE)
+#     text_output = re.search(text_pattern, result, re.IGNORECASE)
+    
+#     graph_needed_value = graph_needed.group(1).strip().lower() if graph_needed else "no"
+#     graph_type_value = graph_type.group(1).strip().strip("'\"[]") if graph_type else "text"
+#     text_str = text_output.group(1).strip() if text_output else ""
+    
+#     data_array_value = None
+#     if data_array:
+#         try:
+#             data_array_text = data_array.group(1).strip()
+#             data_array_value = json.loads(data_array_text)
+#         except json.JSONDecodeError:
+#             data_array_value = None
+    
+#     if data_array_value and isinstance(data_array_value, list) and len(data_array_value) > 0:
+#         first_entry = data_array_value[0]
+#         possible_keys = list(first_entry.keys())
+#         label_key = possible_keys[0]
+#         data_keys = possible_keys[1:] if len(possible_keys) > 1 else []
+        
+#         labels = [str(item.get(label_key, "N/A")) for item in data_array_value]
+#         datasets = []
+#         for item in data_array_value:
+#             item_data = []
+#             for key in data_keys:
+#                 value = item.get(key, None)
+#                 try:
+#                     if value is not None:
+#                         value = float(value)
+#                 except (ValueError, TypeError):
+#                     pass
+#                 item_data.append(value)
+#             datasets.append(tuple(item_data))
+        
+#         formatted_data = {
+#             "labels": labels,
+#             "datasets": datasets,
+#             "legend": data_keys if data_keys else False
+#         }
+#     else:
+#         formatted_data = None
+    
+#     return graph_needed_value, graph_type_value, formatted_data, text_str
