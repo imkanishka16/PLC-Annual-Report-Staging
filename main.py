@@ -43,7 +43,8 @@ app.add_middleware(
         "http://127.0.0.1",            # Alternative localhost
         "http://127.0.0.1:80",         # Alternative with port
         "http://13.203.250.203",       # Your current public IP
-        "http://13.203.250.203:80",    # Your current public IP with port
+        "http://13.203.250.203:80",    # Your current public IP with port 80
+        "http://13.203.250.203:1",     # Add the specific origin with port 1
     ],
     allow_credentials=True,
     allow_methods=["*"],
