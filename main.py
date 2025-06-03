@@ -20,17 +20,32 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# Add CORS middleware for localhost development
+# # Add CORS middleware for localhost development
+# app.add_middleware(
+#     CORSMiddleware,
+#     allow_origins=[
+#         "http://localhost:3000",  # Common frontend port
+#         "http://localhost:8000",  # API port
+#         "http://localhost"        # Generic localhost
+#     ],
+#     allow_credentials=True,
+#     allow_methods=["*"],  # Allows all methods (GET, POST, OPTIONS, etc.)
+#     allow_headers=["*"],  # Allows all headers
+# )
+
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "http://localhost:3000",  # Common frontend port
-        "http://localhost:8000",  # API port
-        "http://localhost"        # Generic localhost
+        "http://localhost:3000",        # Development
+        "http://localhost:80",          # Frontend served by Nginx
+        "http://localhost",             # Generic localhost
+        "http://127.0.0.1",            # Alternative localhost
+        "http://127.0.0.1:80",         # Alternative with port
     ],
     allow_credentials=True,
-    allow_methods=["*"],  # Allows all methods (GET, POST, OPTIONS, etc.)
-    allow_headers=["*"],  # Allows all headers
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 
