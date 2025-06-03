@@ -42,6 +42,8 @@ app.add_middleware(
         "http://localhost",             # Generic localhost
         "http://127.0.0.1",            # Alternative localhost
         "http://127.0.0.1:80",         # Alternative with port
+        "http://13.203.250.203",       # Your current public IP
+        "http://13.203.250.203:80",    # Your current public IP with port
     ],
     allow_credentials=True,
     allow_methods=["*"],
