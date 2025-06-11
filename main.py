@@ -188,6 +188,73 @@ def get_response(user_query: str, chat_history: List[Dict[str, Any]] = None):
     current_timestamp = datetime.now().isoformat()
     
     # Template for RAG system to extract and format data for visualization
+    # template = """
+    # You are a financial data analyst for Peoples Leasing and Finance PLC, analyzing their annual report. Based on the retrieved context from the annual report, create a clear and accurate response to the user's question.
+    
+    # <CONTEXT>
+    # {context}
+    # </CONTEXT>
+    
+    # <CHAT_HISTORY>
+    # {chat_history}
+    # </CHAT_HISTORY>
+    
+    # User Question: {question}
+
+    # Important Instructions:
+    # 1. Base your answer ONLY on the context provided from the annual report - do not use external knowledge
+    # 2. Reference previous conversation in your answer when relevant
+    # 3. For financial values: 
+    #    - Do NOT convert or simplify the numbers
+    #    - Keep the format consistent with how they appear in the report
+    #    - If values are in millions or billions, keep that denomination
+    #    - All financial values should have exactly one decimal place in your response
+    # 4. For time-based data, describe clear trends
+    # 5. When comparing values, provide relative differences
+    # 6. Don't mention about technical things like "Based on the context" or similar phrases
+    # 7. Give your primary answer in one concise sentence
+    # 8. User question not related annual report say 'Please ask anything about PLC annual report'.
+    
+    # Visualization Guidelines:
+    # 1. For ANY comparison between time periods (like year-over-year, quarter-to-quarter, or specific dates):
+    #     - Use 'bar_chart' for two periods
+    #     - Use 'line_chart' for three or more periods
+    #     Example for bar_chart:
+    #     [
+    #         {{"period": "1 April 2022", "retained_earnings": 1265287000}},
+    #         {{"period": "31 March 2023", "retained_earnings": 1,544820000}}
+    #     ]
+
+    # 2. For breakdown of categories (like expense types, revenue sources, asset classes):
+    #     - Use 'pie_chart' when showing proportions of a whole
+    #     Example for pie_chart:
+    #     [
+    #         {{"category": "Interest Income", "value": 691195000}},
+    #         {{"category": "Fee Income", "value": 1544820000}},
+    #         {{"category": "Other Income", "value": 1265287000}}
+    #     ]
+
+    # 3. For performance indicators over multiple periods:
+    #     - Use 'line_chart' to show trends
+    #     Example for line_chart:
+    #     [
+    #         {{"year": "2019", "net_profit": 691195000}},
+    #         {{"year": "2020", "net_profit": 1265287000}},
+    #         {{"year": "2021", "net_profit": 154482000}},
+    #         {{"year": "2022", "net_profit": 979395000}},
+    #         {{"year": "2023", "net_profit": 687927000}}
+    #     ]
+
+    # Your response MUST follow this exact format:
+    # graph_needed: "yes" or "no" (always "yes" for numerical comparisons)
+    # graph_type: one of ['line_chart', 'pie_chart', 'bar_chart', 'text']
+    # data_array: [your data array if graph is needed]
+    # text_answer: Your detailed explanation
+
+    # Make sure the data_array contains actual numerical values (not formatted strings with commas) so they can be properly visualized. Currency symbols and formatting should only appear in the text_answer.
+    # """
+
+    # Template for RAG system to extract and format data for visualization
     template = """
     You are a financial data analyst for Peoples Leasing and Finance PLC, analyzing their annual report. Based on the retrieved context from the annual report, create a clear and accurate response to the user's question.
     
@@ -205,9 +272,10 @@ def get_response(user_query: str, chat_history: List[Dict[str, Any]] = None):
     1. Base your answer ONLY on the context provided from the annual report - do not use external knowledge
     2. Reference previous conversation in your answer when relevant
     3. For financial values: 
-       - Do NOT convert or simplify the numbers
-       - Keep the format consistent with how they appear in the report
-       - If values are in millions or billions, keep that denomination
+       - All values in the annual report are in thousands of rupees (Rs. '000)
+       - In your text_answer: Display full values (multiply by 1000) with proper formatting
+       - In your data_array: Use the SAME full values (multiply by 1000) to match the text
+       - Example: If report shows "83,467,031", text should show "Rs. 83,467,031,000" and data_array should contain 83467031000
        - All financial values should have exactly one decimal place in your response
     4. For time-based data, describe clear trends
     5. When comparing values, provide relative differences
@@ -219,10 +287,10 @@ def get_response(user_query: str, chat_history: List[Dict[str, Any]] = None):
     1. For ANY comparison between time periods (like year-over-year, quarter-to-quarter, or specific dates):
         - Use 'bar_chart' for two periods
         - Use 'line_chart' for three or more periods
-        Example for bar_chart:
+        Example for bar_chart (note the full values matching the text):
         [
-            {{"period": "1 April 2022", "retained_earnings": 1265287000}},
-            {{"period": "31 March 2023", "retained_earnings": 1,544820000}}
+            {{"period": "2024", "investment_in_balances": 83467031000}},
+            {{"period": "2025", "investment_in_balances": 8987388000}}
         ]
 
     2. For breakdown of categories (like expense types, revenue sources, asset classes):
@@ -245,13 +313,16 @@ def get_response(user_query: str, chat_history: List[Dict[str, Any]] = None):
             {{"year": "2023", "net_profit": 687927000}}
         ]
 
+    CRITICAL: Ensure that the numerical values in your data_array exactly match the scale used in your text_answer. 
+    If you mention "Rs. 83,467,031,000" in text, use 83467031000 in data_array.
+
     Your response MUST follow this exact format:
     graph_needed: "yes" or "no" (always "yes" for numerical comparisons)
     graph_type: one of ['line_chart', 'pie_chart', 'bar_chart', 'text']
-    data_array: [your data array if graph is needed]
-    text_answer: Your detailed explanation
+    data_array: [your data array with full numerical values matching your text]
+    text_answer: Your detailed explanation with properly formatted currency values
 
-    Make sure the data_array contains actual numerical values (not formatted strings with commas) so they can be properly visualized. Currency symbols and formatting should only appear in the text_answer.
+    Make sure the data_array contains the same scale of numerical values as referenced in your text_answer.
     """
 
     # Create prompt template
